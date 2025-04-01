@@ -9,7 +9,7 @@ var srcDir = $"C:\\Users\\spottumuttu\\Downloads";
 
 Console.WriteLine($"start time {DateTime.Now}");
 
-var wcdDirPath = $"{srcDir}\\{wcdFileId}";
+var wcdDirPath = Path.Combine(srcDir, wcdFileId);
 var wcdZipFile = Path.Combine($"{wcdDirPath}", $"{wcdFileId}.zip");
 var wcdMD5File = Path.Combine($"{wcdDirPath}", $"{wcdFileId}.md5");
 
