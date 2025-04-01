@@ -5,9 +5,10 @@ using System.Security.Cryptography;
 
 
 var wcdFileId = "00007794_1711405171000";
-string[] fileNamesNeedToCheck = { "primary.db", "primary.db-shm", "primary.db-wal" };
+var srcDir = $"C:\\Users\\spottumuttu\\Downloads";
+//string[] fileNamesNeedToCheck = { "primary.db", "primary.db-shm", "primary.db-wal" };
 
-var wcdDirPath = $"C:\\Users\\spottumuttu\\Downloads\\{wcdFileId}";
+var wcdDirPath = $"{srcDir}\\{wcdFileId}";
 var wcdZipFile = Path.Combine($"{wcdDirPath}", $"{wcdFileId}.zip");
 var wcdMD5File = Path.Combine($"{wcdDirPath}", $"{wcdFileId}.md5");
 
@@ -20,42 +21,89 @@ if (File.Exists(wcdMD5File) == false)
 
 
 
-for (var i = 0; i < fileNamesNeedToCheck.Length; i++)
+
+string primarydbFileCheckSum = string.Empty;
+string primarydbshmFileCheckSum = string.Empty;
+string primarydbwalFileCheckSum = string.Empty;
+string primarydbFile = $"media/kestra-pfs/data/database/primary.db";
+string primarydbshmFile = $"media/kestra-pfs/data/database/primary.db-shm";
+string primarydbwalFile = $"media/kestra-pfs/data/database/primary.db-wal";
+
+await foreach (var line in File.ReadLinesAsync(wcdMD5File))
 {
-    var targetFileCheckSum = string.Empty;
-    var targetFile = $"media/kestra-pfs/data/database/{fileNamesNeedToCheck[i]}";
-    await foreach (var line in File.ReadLinesAsync(wcdMD5File))
+    if ((primarydbFileCheckSum != string.Empty) && (primarydbshmFileCheckSum != string.Empty) && (primarydbwalFileCheckSum != string.Empty))
     {
-        if ((line.Contains(targetFile)) && (targetFile == line.Split("  ")[1]))
+        break;
+    }
+    if ((line.Contains(primarydbFile)) && (primarydbFile == line.Split("  ")[1]))
+    {
+        primarydbFileCheckSum = line.Split("  ")[0];
+    }
+    else if ((line.Contains(primarydbshmFile)) && (primarydbshmFile == line.Split("  ")[1]))
+    {
+        primarydbshmFileCheckSum = line.Split("  ")[0];
+    }
+    else if ((line.Contains(primarydbwalFile)) && (primarydbwalFile == line.Split("  ")[1]))
+    {
+        primarydbwalFileCheckSum = line.Split("  ")[0];
+    }
+    else
+    {
+        continue;
+    }
+}
+
+//compute the checksum from the zip files
+int count = 0;
+using FileStream zipToOpen = new FileStream(wcdZipFile, FileMode.Open);
+using ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Read);
+foreach (ZipArchiveEntry entry in archive.Entries)
+{
+    if (count == 3) break; //just to avoid unnecessary loops
+    if (entry.FullName == primarydbFile)
+    {
+        var zipStream = entry.Open();
+        byte[] result = await MD5.HashDataAsync(zipStream);
+        string targetFileCheckSumInZipArchive = BitConverter.ToString(result).Replace("-", "").ToLower();
+        if (primarydbFileCheckSum == targetFileCheckSumInZipArchive)
         {
-            targetFileCheckSum = line.Split("  ")[0];
-            break;
+            count++;
+            Console.WriteLine($"{entry.FullName} true");
         }
+        else
+            Console.WriteLine($"{entry.FullName} false");
+    }
+    if (entry.FullName == primarydbshmFile)
+    {
+        var zipStream = entry.Open();
+        byte[] result = await MD5.HashDataAsync(zipStream);
+        string targetFileCheckSumInZipArchive = BitConverter.ToString(result).Replace("-", "").ToLower();
+        if (primarydbshmFileCheckSum == targetFileCheckSumInZipArchive)
+        {
+            count++;
+            Console.WriteLine($"{entry.FullName} true");
+        }
+        else
+            Console.WriteLine($"{entry.FullName} false");
+    }
+    if (entry.FullName == primarydbwalFile)
+    {
+        var zipStream = entry.Open();
+        byte[] result = await MD5.HashDataAsync(zipStream);
+        string targetFileCheckSumInZipArchive = BitConverter.ToString(result).Replace("-", "").ToLower();
+        if (primarydbwalFileCheckSum == targetFileCheckSumInZipArchive)
+        {
+            count++;
+            Console.WriteLine($"{entry.FullName} true");
+        }
+        else
+            Console.WriteLine($"{entry.FullName} false");
     }
 
-    //compute the checksum from the zip files
-    using FileStream zipToOpen = new FileStream(wcdZipFile, FileMode.Open);
-    using ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Read);
-    foreach (ZipArchiveEntry entry in archive.Entries)
-    {
-        if (entry.FullName == targetFile)
-        {
-            var zipStream1 = entry.Open();
-            //Span<byte> hash = stackalloc byte[16];
-            //MD5.HashData(zipStream1, hash);
-            //hash.SequenceEqual(hash2);
-            byte[] result = await MD5.HashDataAsync(zipStream1);
-            string targetFileCheckSumInZipArchive = BitConverter.ToString(result).Replace("-", "").ToLower();
-            //byte[] buffer = System.Text.Encoding.UTF8.GetBytes(targetFileCheckSum);
-            //result.SequenceEqual(buffer);
-            if (targetFileCheckSum == targetFileCheckSumInZipArchive)
-                Console.WriteLine("true");
-            else
-                Console.WriteLine("false");
-        }
-    }
 
 }
+
+
 
 
 static bool CompareByChecksum(string firstFilePath, string secondFilePath)
