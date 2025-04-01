@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 
 
-var wcdFileId = "00007794_1711405171000";
+var wcdFileId = "00006722_1697493954000";
 var srcDir = $"C:\\Users\\spottumuttu\\Downloads";
 
 Console.WriteLine($"start time {DateTime.Now}");
@@ -62,7 +62,7 @@ foreach (ZipArchiveEntry entry in archive.Entries)
     {
         var zipStream = entry.Open();
         byte[] hashresult = await MD5.HashDataAsync(zipStream);
-        string targetFileCheckSumInZipArchive = BitConverter.ToString(hashresult).Replace("-", "").ToLower();
+        string targetFileCheckSumInZipArchive = Convert.ToHexStringLower(hashresult);
         if (primarydbFileCheckSum == targetFileCheckSumInZipArchive)
         {
             count++;
@@ -77,7 +77,7 @@ foreach (ZipArchiveEntry entry in archive.Entries)
     {
         var zipStream = entry.Open();
         byte[] hashresult = await MD5.HashDataAsync(zipStream);
-        string targetFileCheckSumInZipArchive = BitConverter.ToString(hashresult).Replace("-", "").ToLower();
+        string targetFileCheckSumInZipArchive = Convert.ToHexStringLower(hashresult);
         if (primarydbshmFileCheckSum == targetFileCheckSumInZipArchive)
         {
             count++;
@@ -92,7 +92,7 @@ foreach (ZipArchiveEntry entry in archive.Entries)
     {
         var zipStream = entry.Open();
         byte[] hashresult = await MD5.HashDataAsync(zipStream);
-        string targetFileCheckSumInZipArchive = BitConverter.ToString(hashresult).Replace("-", "").ToLower();
+        string targetFileCheckSumInZipArchive = Convert.ToHexStringLower(hashresult);
         if (primarydbwalFileCheckSum == targetFileCheckSumInZipArchive)
         {
             count++;
