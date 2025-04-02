@@ -80,6 +80,7 @@ public class WCDFolderValidator : IWCDFolderValidator
                         if (matchCount == filesToCheck.Count) break;
 #endif
 #if NET6_0
+                        //Console.WriteLine(Environment.Version.ToString());
                         using var md5 = MD5.Create();
                         using Stream zipStream = entry.Open();
                         var hashResult = await md5.ComputeHashAsync(zipStream);
